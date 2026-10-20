@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/personal-finance-command-center/', // GitHub Pages project-site path
+  base: '/PersonalFinanceCommandCenter/', // GitHub Pages project-site path
   plugins: [react()],
   test: {
     environment: 'jsdom',
