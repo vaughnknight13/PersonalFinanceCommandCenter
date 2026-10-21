@@ -7,6 +7,7 @@ import {
   isValidIsoDate,
   startOfMonth,
   todayIso,
+  makeDateRange,
 } from './dates';
 
 describe('isValidIsoDate', () => {
@@ -97,5 +98,24 @@ describe('todayIso', () => {
   it('uses the local calendar day of the date it is given', () => {
     expect(todayIso(new Date(2026, 9, 20, 23, 59))).toBe('2026-10-20');
     expect(todayIso(new Date(2028, 1, 29, 0, 0))).toBe('2028-02-29');
+  });
+});
+
+describe('makeDateRange', () => {
+  it('accepts a range, including a single day', () => {
+    expect(makeDateRange('2026-10-01', '2026-10-31')).toEqual({
+      ok: true,
+      range: { start: '2026-10-01', end: '2026-10-31' },
+    });
+    expect(makeDateRange('2026-10-05', '2026-10-05').ok).toBe(true);
+  });
+
+  it('rejects a start date after the end date', () => {
+    expect(makeDateRange('2026-10-31', '2026-10-01').ok).toBe(false);
+  });
+
+  it('rejects invalid dates', () => {
+    expect(makeDateRange('2026-02-30', '2026-03-01')).toEqual({ ok: false, error: 'Enter a valid start date.' });
+    expect(makeDateRange('2026-03-01', 'soon')).toEqual({ ok: false, error: 'Enter a valid end date.' });
   });
 });

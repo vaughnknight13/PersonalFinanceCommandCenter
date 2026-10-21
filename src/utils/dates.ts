@@ -118,3 +118,26 @@ export function todayIso(now: Date = new Date()): IsoDate {
     day: now.getDate(),
   });
 }
+
+export interface DateRange {
+  start: IsoDate;
+  end: IsoDate;
+}
+
+export type DateRangeResult =
+  | { ok: true; range: DateRange }
+  | { ok: false; error: string };
+
+// For user-entered ranges (the custom report period). Both dates are inclusive.
+export function makeDateRange(start: string, end: string): DateRangeResult {
+  if (!isValidIsoDate(start)) {
+    return { ok: false, error: 'Enter a valid start date.' };
+  }
+  if (!isValidIsoDate(end)) {
+    return { ok: false, error: 'Enter a valid end date.' };
+  }
+  if (start > end) {
+    return { ok: false, error: 'The start date must be on or before the end date.' };
+  }
+  return { ok: true, range: { start, end } };
+}

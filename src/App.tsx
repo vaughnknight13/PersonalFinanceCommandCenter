@@ -9,6 +9,7 @@ import {
   type StorageActionResult,
 } from './services/storage';
 import { todayIso } from './utils/dates';
+import SummaryCheck from './features/dashboard/SummaryCheck';
 
 function statusText(result: LoadResult): string {
   switch (result.status) {
@@ -27,6 +28,7 @@ function statusText(result: LoadResult): string {
 
 // Temporary page that exercises the storage layer. Milestone 3 replaces it.
 export default function App() {
+  const today = todayIso();
   const [loadResult, setLoadResult] = useState<LoadResult>(() => loadAppData());
   const [message, setMessage] = useState('');
 
@@ -65,7 +67,7 @@ export default function App() {
         <dt>Base path</dt>
         <dd>{import.meta.env.BASE_URL}</dd>
         <dt>Today (local)</dt>
-        <dd>{todayIso()}</dd>
+        <dd>{today}</dd>
       </dl>
 
       <h2>Storage check</h2>
@@ -91,6 +93,7 @@ export default function App() {
         </dl>
       )}
 
+      {loadResult.status === 'loaded' && <SummaryCheck data={loadResult.data} today={today} />}
       <div className="setup-check__actions">
         <button type="button" onClick={handleLoadDemo} disabled={!canChangeData}>
           Load demo data

@@ -30,6 +30,7 @@ describe('App', () => {
 
     expect(screen.getByText('Status: Demo data loaded')).toBeInTheDocument();
     expect(window.localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'Calculation check' })).toBeInTheDocument();
   });
 
   it('asks for confirmation before replacing existing data', () => {
