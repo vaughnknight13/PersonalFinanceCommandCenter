@@ -8,6 +8,12 @@
   --color-text-muted: #5b6675;
   --color-border: #dde1e7;
   --color-accent: #0f766e;
+  --color-accent-text: #ffffff;
+  --color-income: #15803d;
+  --color-expense: #b91c1c;
+  --color-danger: #b91c1c;
+  --color-notice-bg: #fef3c7;
+  --color-notice-text: #78350f;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -27,5 +33,11 @@
     --color-text-muted: #9aa5b4;
     --color-border: #2b3542;
     --color-accent: #2dd4bf;
+    --color-accent-text: #07201d;
+    --color-income: #4ade80;
+    --color-expense: #f87171;
+    --color-danger: #f87171;
+    --color-notice-bg: #422006;
+    --color-notice-text: #fde68a;
   }
 }

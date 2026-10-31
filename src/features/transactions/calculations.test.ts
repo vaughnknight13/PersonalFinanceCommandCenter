@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Transaction } from '../../types/finance';
-import { EMPTY_FILTERS, filterTransactions, paginate, sortTransactions } from './calculations';
+import { EMPTY_FILTERS, filterTransactions, paginate, sortTransactions, dateRangeFromInputs } from './calculations';
+import { EARLIEST_DATE, LATEST_DATE } from '../../utils/dates';
 
 function tx(overrides: Partial<Transaction> & { id: string }): Transaction {
   return {
@@ -135,5 +136,42 @@ describe('paginate', () => {
 
   it('treats a page size below 1 as 1', () => {
     expect(paginate(numbers, 1, 0).pageCount).toBe(25);
+  });
+});
+
+describe('dateRangeFromInputs', () => {
+  it('means "no date filter" when both inputs are empty', () => {
+    expect(dateRangeFromInputs('', '')).toEqual({ ok: true, range: null });
+  });
+
+  it('accepts a full range, including a single day', () => {
+    expect(dateRangeFromInputs('2026-10-01', '2026-10-31')).toEqual({
+      ok: true,
+      range: { start: '2026-10-01', end: '2026-10-31' },
+    });
+    expect(dateRangeFromInputs('2026-10-05', '2026-10-05').ok).toBe(true);
+  });
+
+  it('treats a missing side as open-ended', () => {
+    expect(dateRangeFromInputs('2026-10-01', '')).toEqual({
+      ok: true,
+      range: { start: '2026-10-01', end: LATEST_DATE },
+    });
+    expect(dateRangeFromInputs('', '2026-10-01')).toEqual({
+      ok: true,
+      range: { start: EARLIEST_DATE, end: '2026-10-01' },
+    });
+  });
+
+  it('rejects a start after the end', () => {
+    expect(dateRangeFromInputs('2026-10-31', '2026-10-01')).toEqual({
+      ok: false,
+      error: 'The "from" date must be on or before the "to" date.',
+    });
+  });
+
+  it('rejects invalid dates', () => {
+    expect(dateRangeFromInputs('soon', '')).toEqual({ ok: false, error: 'Enter a valid "from" date.' });
+    expect(dateRangeFromInputs('', '2026-02-30')).toEqual({ ok: false, error: 'Enter a valid "to" date.' });
   });
 });

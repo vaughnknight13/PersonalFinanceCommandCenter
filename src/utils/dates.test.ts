@@ -8,6 +8,7 @@ import {
   startOfMonth,
   todayIso,
   makeDateRange,
+  formatDisplayDate,
 } from './dates';
 
 describe('isValidIsoDate', () => {
@@ -117,5 +118,19 @@ describe('makeDateRange', () => {
   it('rejects invalid dates', () => {
     expect(makeDateRange('2026-02-30', '2026-03-01')).toEqual({ ok: false, error: 'Enter a valid start date.' });
     expect(makeDateRange('2026-03-01', 'soon')).toEqual({ ok: false, error: 'Enter a valid end date.' });
+  });
+});
+
+describe('formatDisplayDate', () => {
+  it.each([
+    ['2026-10-20', 'Oct 20, 2026'],
+    ['2028-02-29', 'Feb 29, 2028'],
+    ['2026-01-01', 'Jan 1, 2026'],
+  ])('formats %s as %s', (date, expected) => {
+    expect(formatDisplayDate(date)).toBe(expected);
+  });
+
+  it('throws on an invalid date', () => {
+    expect(() => formatDisplayDate('2026-02-30')).toThrow('Invalid ISO date');
   });
 });

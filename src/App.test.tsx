@@ -1,7 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import { BACKUP_KEY, STORAGE_KEY } from './services/storage';
+import { createDemoData } from './data/demoData';
+import { BACKUP_KEY, STORAGE_KEY, saveAppData } from './services/storage';
+import { todayIso } from './utils/dates';
+
+function renderApp(route = '/') {
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      <App />
+    </MemoryRouter>,
+  );
+}
+
+function clickButton(name: string): void {
+  fireEvent.click(screen.getByRole('button', { name }));
+}
+
+function saveDemoDataBeforeLoad(): void {
+  saveAppData(createDemoData(todayIso()));
+}
 
 describe('App', () => {
   beforeEach(() => {
@@ -12,64 +31,102 @@ describe('App', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders the page heading', () => {
-    render(<App />);
-    expect(
-      screen.getByRole('heading', { name: /personal finance command center/i }),
-    ).toBeInTheDocument();
+  it('welcomes a first-time visitor and offers a choice', () => {
+    renderApp();
+    expect(screen.getByRole('heading', { name: 'Personal Finance Command Center' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Explore with demo data' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start with my own data' })).toBeInTheDocument();
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
-  it('starts empty before any data is saved', () => {
-    render(<App />);
-    expect(screen.getByText('Status: No saved data yet')).toBeInTheDocument();
-  });
+  it('loads demo data, saves it, and labels it as demo data', () => {
+    renderApp();
+    clickButton('Explore with demo data');
 
-  it('loads demo data and saves it to the browser', () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Load demo data' }));
-
-    expect(screen.getByText('Status: Demo data loaded')).toBeInTheDocument();
-    expect(window.localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(screen.getByText(/fictional sample data/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Calculation check' })).toBeInTheDocument();
+    expect(window.localStorage.getItem(STORAGE_KEY)).not.toBeNull();
   });
 
-  it('asks for confirmation before replacing existing data', () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Load demo data' }));
-    const savedBefore = window.localStorage.getItem(STORAGE_KEY);
+  it('opens straight into the app when data was saved earlier', () => {
+    saveDemoDataBeforeLoad();
+    renderApp();
+    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explore with demo data' })).not.toBeInTheDocument();
+  });
 
+  it('starts empty without a demo banner and explains the empty transaction list', () => {
+    renderApp();
+    clickButton('Start with my own data');
+
+    expect(screen.queryByText(/fictional sample data/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', { name: 'Transactions' }));
+    expect(screen.getByRole('heading', { name: 'Transactions' })).toBeInTheDocument();
+    expect(screen.getByText(/No transactions recorded yet/)).toBeInTheDocument();
+  });
+
+  it('shows demo transactions on the transactions page', () => {
+    saveDemoDataBeforeLoad();
+    renderApp('/transactions');
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByText(/Showing 1.25 of \d+ transactions/)).toBeInTheDocument();
+  });
+
+  it('asks before removing demo data from the banner', () => {
+    saveDemoDataBeforeLoad();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Load demo data' }));
+    renderApp();
 
+    clickButton('Start with my own data');
     expect(confirmSpy).toHaveBeenCalled();
-    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(savedBefore);
-  });
-
-  it('clears all data only after confirmation', () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Load demo data' }));
-
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
-    expect(screen.getByText('Status: Demo data loaded')).toBeInTheDocument();
+    expect(screen.getByText(/fictional sample data/i)).toBeInTheDocument();
 
     confirmSpy.mockReturnValue(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Clear all data' }));
-    expect(screen.getByText('Status: No saved data yet')).toBeInTheDocument();
+    clickButton('Start with my own data');
+    expect(screen.queryByText(/fictional sample data/i)).not.toBeInTheDocument();
+  });
+
+  it('deletes all data only after confirmation', () => {
+    saveDemoDataBeforeLoad();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderApp('/settings');
+
+    clickButton('Delete all data');
+    expect(window.localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+
+    confirmSpy.mockReturnValue(true);
+    clickButton('Delete all data');
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Explore with demo data' })).toBeInTheDocument();
   });
 
   it('protects damaged data and lets the user move it aside', () => {
     window.localStorage.setItem(STORAGE_KEY, '{oops');
-    render(<App />);
+    renderApp();
 
-    expect(screen.getByText('Status: Saved data is damaged')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Load demo data' })).toBeDisabled();
+    expect(screen.getByRole('heading', { name: 'Your saved data could not be read' })).toBeInTheDocument();
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('{oops');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move damaged data aside' }));
-
-    expect(screen.getByText('Status: No saved data yet')).toBeInTheDocument();
+    clickButton('Move damaged data aside and start over');
+    expect(screen.getByRole('button', { name: 'Explore with demo data' })).toBeInTheDocument();
     expect(window.localStorage.getItem(BACKUP_KEY)).toBe('{oops');
+  });
+
+  it('does not touch data saved by a newer version of the app', () => {
+    const newer = JSON.stringify({ schemaVersion: 99, savedAt: 'x', data: {} });
+    window.localStorage.setItem(STORAGE_KEY, newer);
+    renderApp();
+
+    expect(screen.getByRole('heading', { name: /newer version/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(newer);
+  });
+
+  it('shows a not-found page for unknown addresses', () => {
+    saveDemoDataBeforeLoad();
+    renderApp('/nope');
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
   });
 });

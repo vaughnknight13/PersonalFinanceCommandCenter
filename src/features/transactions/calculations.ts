@@ -1,5 +1,11 @@
 import type { Transaction } from '../../types/finance';
-import { isDateInRange, type DateRange } from '../../utils/dates';
+import {
+  EARLIEST_DATE,
+  LATEST_DATE,
+  isDateInRange,
+  isValidIsoDate,
+  type DateRange,
+} from '../../utils/dates';
 
 export interface TransactionFilters {
   searchText: string;
@@ -110,4 +116,29 @@ export function paginate<T>(items: readonly T[], requestedPage: number, pageSize
   const start = (page - 1) * size;
 
   return { items: items.slice(start, start + size), page, pageCount, totalItems };
+}
+
+export type DateFilterResult =
+  | { ok: true; range: DateRange | null } // null means "no date filter"
+  | { ok: false; error: string };
+
+// Turns the two date inputs into a range. Either side may be left empty
+// for an open-ended range ("everything since March").
+export function dateRangeFromInputs(from: string, to: string): DateFilterResult {
+  if (from === '' && to === '') {
+    return { ok: true, range: null };
+  }
+  if (from !== '' && !isValidIsoDate(from)) {
+    return { ok: false, error: 'Enter a valid "from" date.' };
+  }
+  if (to !== '' && !isValidIsoDate(to)) {
+    return { ok: false, error: 'Enter a valid "to" date.' };
+  }
+
+  const start = from === '' ? EARLIEST_DATE : from;
+  const end = to === '' ? LATEST_DATE : to;
+  if (start > end) {
+    return { ok: false, error: 'The "from" date must be on or before the "to" date.' };
+  }
+  return { ok: true, range: { start, end } };
 }

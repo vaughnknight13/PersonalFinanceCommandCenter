@@ -15,6 +15,9 @@ const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MIN_YEAR = 1900; // sanity bounds that catch typos like "0206-05-01"
 const MAX_YEAR = 2100;
 
+export const EARLIEST_DATE: IsoDate = `${MIN_YEAR}-01-01`;
+export const LATEST_DATE: IsoDate = `${MAX_YEAR}-12-31`;
+
 export function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
@@ -140,4 +143,17 @@ export function makeDateRange(start: string, end: string): DateRangeResult {
     return { ok: false, error: 'The start date must be on or before the end date.' };
   }
   return { ok: true, range: { start, end } };
+}
+
+// "Oct 20, 2026". The formatter works in UTC so the day can never shift.
+const displayDateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
+export function formatDisplayDate(date: IsoDate): string {
+  const { year, month, day } = requireParts(date);
+  return displayDateFormatter.format(new Date(Date.UTC(year, month - 1, day)));
 }
