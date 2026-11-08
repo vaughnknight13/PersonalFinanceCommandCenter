@@ -11,7 +11,7 @@ import {
   type SortKey,
   type TransactionFilters,
 } from './calculations';
-import TransactionTable from './TransactionTable';
+   import TransactionTable, { type TransactionActions } from './TransactionTable';
 
 const PAGE_SIZE = 25;
 
@@ -50,9 +50,10 @@ function describeShownRange(page: Page<Transaction>): string {
 
 interface TransactionBrowserProps {
   data: AppData;
+  actions?: TransactionActions;
 }
 
-export default function TransactionBrowser({ data }: TransactionBrowserProps) {
+export default function TransactionBrowser({ data, actions }: TransactionBrowserProps) {
   const [inputs, setInputs] = useState<FilterInputs>(NO_INPUTS);
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -109,7 +110,6 @@ export default function TransactionBrowser({ data }: TransactionBrowserProps) {
 
   return (
     <div className="stack">
-      <h1>Transactions</h1>
 
       <div className="filter-bar" role="search" aria-label="Filter transactions">
         <div className="field field--wide">
@@ -192,7 +192,7 @@ export default function TransactionBrowser({ data }: TransactionBrowserProps) {
 
       {data.transactions.length === 0 && (
         <p className="empty-state">
-          No transactions recorded yet. Load demo data from Settings to see how the app works.
+          No transactions recorded yet. Use "Add transaction" to record your first one.
         </p>
       )}
 
@@ -217,6 +217,7 @@ export default function TransactionBrowser({ data }: TransactionBrowserProps) {
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={handleSort}
+            actions={actions}
           />
           {page.pageCount > 1 && (
             <Pagination page={page.page} pageCount={page.pageCount} onPageChange={setRequestedPage} />

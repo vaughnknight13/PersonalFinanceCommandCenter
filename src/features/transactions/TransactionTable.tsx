@@ -8,6 +8,11 @@ import {
   transactionTypeLabel,
 } from './display';
 
+export interface TransactionActions {
+  onEdit(transaction: Transaction): void;
+  onDelete(transaction: Transaction): void;
+}
+
 interface TransactionTableProps {
   transactions: readonly Transaction[];
   categoryNames: ReadonlyMap<string, string>;
@@ -15,6 +20,7 @@ interface TransactionTableProps {
   sortKey: SortKey;
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
+  actions?: TransactionActions; // when omitted, the table is read-only
 }
 
 function ariaSortValue(isActive: boolean, direction: SortDirection): 'ascending' | 'descending' | 'none' {
@@ -69,6 +75,7 @@ export default function TransactionTable({
   sortKey,
   sortDirection,
   onSort,
+  actions,
 }: TransactionTableProps) {
   return (
     <div className="table-wrap">
@@ -95,6 +102,7 @@ export default function TransactionTable({
               onSort={onSort}
               numeric
             />
+            {actions !== undefined && <th scope="col">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -111,6 +119,26 @@ export default function TransactionTable({
               <td>{describeAccounts(transaction, accountNames)}</td>
               <td>{transactionTypeLabel(transaction.type)}</td>
               <td className={amountClassName(transaction.type)}>{formatTransactionAmount(transaction)}</td>
+              {actions !== undefined && (
+                <td className="actions-cell">
+                  <button
+                    type="button"
+                    className="button button--small"
+                    aria-label={`Edit ${transaction.description}`}
+                    onClick={() => actions.onEdit(transaction)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="button button--small button--danger"
+                    aria-label={`Delete ${transaction.description}`}
+                    onClick={() => actions.onDelete(transaction)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -128,5 +128,24 @@ describe('App', () => {
     saveDemoDataBeforeLoad();
     renderApp('/nope');
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+  });
+
+  it('saves a new transaction in the browser, and it is still there after a reload', () => {
+    saveDemoDataBeforeLoad();
+    const { unmount } = renderApp('/transactions');
+
+    clickButton('Add transaction');
+    const form = screen.getByRole('form', { name: 'Add transaction' });
+    fireEvent.change(within(form).getByLabelText('Description'), { target: { value: 'Persistence check' } });
+    fireEvent.change(within(form).getByLabelText('Amount'), { target: { value: '9.99' } });
+    fireEvent.change(within(form).getByLabelText('Category'), { target: { value: 'cat-groceries' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Save transaction' }));
+
+    expect(screen.getByText('Transaction added.')).toBeInTheDocument();
+    expect(window.localStorage.getItem(STORAGE_KEY)).toContain('Persistence check');
+
+    unmount();
+    renderApp('/transactions');
+    expect(screen.getByText('Persistence check')).toBeInTheDocument();
   });
 });

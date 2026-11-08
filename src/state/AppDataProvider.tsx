@@ -35,6 +35,15 @@ export default function AppDataProvider({ children }: AppDataProviderProps) {
     startFresh: () => finish(saveAppData(createEmptyData())),
     clearEverything: () => finish(clearAllData()),
     moveDamagedDataAside: () => finish(quarantineStoredData()),
+    updateData: (transform) => {
+      if (loadResult.status !== 'loaded') {
+        return { ok: false, error: 'There is no loaded data to change.' };
+      }
+      const result = saveAppData(transform(loadResult.data));
+      setLoadResult(loadAppData()); // always show what storage actually holds
+      setMessage('');
+      return result;
+    },
   };
 
   return <AppDataContext.Provider value={store}>{children}</AppDataContext.Provider>;

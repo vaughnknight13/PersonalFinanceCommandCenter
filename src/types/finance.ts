@@ -33,7 +33,11 @@ const signedCentsSchema = z
   .max(MAX_CENTS, 'That amount is too large.');
 
 function requiredText(maxLength: number, message: string) {
-  return z.string().trim().min(1, message).max(maxLength);
+  return z
+    .string()
+    .trim()
+    .min(1, message)
+    .max(maxLength, `Keep this to ${maxLength} characters or fewer.`);
 }
 
 // ---- Money movement rules shared by transactions and recurring items ----
@@ -110,8 +114,8 @@ export const transactionSchema = z
     toAccountId: idSchema.optional(),
     goalId: idSchema.optional(),
     recurringId: idSchema.optional(),
-    merchant: z.string().trim().max(100).optional(),
-    notes: z.string().trim().max(1000).optional(),
+    merchant: z.string().trim().max(100, 'Keep this to 100 characters or fewer.').optional(),
+    notes: z.string().trim().max(1000, 'Keep this to 1,000 characters or fewer.').optional(),
   })
   .superRefine((value, ctx) => {
     for (const issue of movementRuleIssues(value)) {
@@ -161,7 +165,7 @@ export const savingsGoalSchema = z.object({
   targetCents: positiveCentsSchema,
   initialSavedCents: nonNegativeCentsSchema,
   targetDate: isoDateSchema,
-  notes: z.string().trim().max(1000).optional(),
+  notes: z.string().trim().max(1000, 'Keep this to 1,000 characters or fewer.').optional(),
 });
 
 // isDemo is true only while the data came from the built-in demo dataset.

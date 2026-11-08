@@ -34,3 +34,13 @@ These rules are implemented in `src/features/dashboard/calculations.ts` and
 - A goal's saved amount = `initialSavedCents` + the sum of transfers linked to
   that goal. It is never stored separately, so a contribution cannot be counted twice.
 - A contribution is never an expense and never new income.
+
+
+## Editing and deleting
+- Editing a transaction replaces the stored record. Totals, balances and goal
+  progress are recalculated from the records, so nothing else needs updating.
+- Deleting a transaction removes it from every total. Deleting a transfer that
+  is linked to a savings goal lowers that goal's progress, because progress is
+  calculated from linked transfers.
+- Every change is saved as one all-or-nothing write. If saving fails, the
+  screen keeps showing the previously saved data.
