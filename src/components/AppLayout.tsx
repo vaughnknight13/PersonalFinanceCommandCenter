@@ -44,6 +44,11 @@ export default function AppLayout() {
                 </NavLink>
               </li>
               <li>
+                <NavLink to="/manage" className={navClassName}>
+                  Accounts &amp; categories
+                </NavLink>
+              </li>
+              <li>
                 <NavLink to="/settings" className={navClassName}>
                   Settings
                 </NavLink>

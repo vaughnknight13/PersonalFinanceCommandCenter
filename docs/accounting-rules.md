@@ -44,3 +44,16 @@ These rules are implemented in `src/features/dashboard/calculations.ts` and
   calculated from linked transfers.
 - Every change is saved as one all-or-nothing write. If saving fails, the
   screen keeps showing the previously saved data.
+
+
+## Accounts and categories
+- Account names are unique (ignoring capitals). An account opening balance may
+  be negative, which is how a credit card balance is entered.
+- An account cannot be deleted while any transaction (as the source or the
+  destination of a transfer) or recurring item uses it, and at least one
+  account must always exist. This keeps every record pointing at something real.
+- A category is either income or expense and its kind cannot change, because
+  income may only use income categories and expenses only expense categories.
+- Category names are unique within a kind. A category cannot be deleted while
+  transactions or recurring items use it. Deleting an unused category also
+  deletes its monthly budget.

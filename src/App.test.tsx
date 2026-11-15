@@ -148,4 +148,17 @@ describe('App', () => {
     renderApp('/transactions');
     expect(screen.getByText('Persistence check')).toBeInTheDocument();
   });
+
+  it('opens the accounts and categories page from the navigation', () => {
+    saveDemoDataBeforeLoad();
+    renderApp();
+
+    fireEvent.click(screen.getByRole('link', { name: 'Accounts & categories' }));
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Accounts and categories' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Accounts' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Categories' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'How automatic categories work' })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'Everyday Checking' })).toBeInTheDocument();
+  });
 });

@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type { StorageActionResult } from '../../services/storage';
 import type { AppData, Transaction } from '../../types/finance';
 import type { IsoDate } from '../../types/primitives';
 import { createId } from '../../utils/ids';
+import { createCategorizer } from '../categorization/categorizer';
+import { DEFAULT_KEYWORD_RULES } from '../categorization/defaultRules';
 import {
   FORM_FIELD_ORDER,
   emptyFormValues,
@@ -23,7 +25,7 @@ function fieldId(field: FormField): string {
   return `txn-${field}`;
 }
 
-interface TransactionFormProps {
+interface TransactionEntryFormProps {
   data: AppData;
   transaction?: Transaction; // present when editing
   today: IsoDate;
@@ -31,7 +33,13 @@ interface TransactionFormProps {
   onCancel(): void;
 }
 
-export default function TransactionForm({ data, transaction, today, onSave, onCancel }: TransactionFormProps) {
+export default function TransactionEntryForm({
+  data,
+  transaction,
+  today,
+  onSave,
+  onCancel,
+}: TransactionEntryFormProps) {
   const isEditing = transaction !== undefined;
   const [newId] = useState(() => createId());
   const [values, setValues] = useState<TransactionFormValues>(() =>
@@ -41,29 +49,62 @@ export default function TransactionForm({ data, transaction, today, onSave, onCa
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState('');
+  // The category is filled in automatically until the user picks one. An
+  // existing transaction already has its category, so it starts as "chosen".
+  const [categoryChosenByUser, setCategoryChosenByUser] = useState(isEditing);
+  const [suggestedKeyword, setSuggestedKeyword] = useState('');
   const descriptionRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     descriptionRef.current?.focus();
   }, []);
 
+  // Rebuilt only when the categories change, not on every keystroke.
+  const categorize = useMemo(() => createCategorizer(data.categories, DEFAULT_KEYWORD_RULES), [data.categories]);
+
   const isTransfer = values.type === 'transfer';
   const categoryKind = values.type === 'income' ? 'income' : 'expense';
   const categoryOptions = data.categories.filter((category) => category.kind === categoryKind);
+  const showSuggestionHint = suggestedKeyword !== '' && !categoryChosenByUser && !isTransfer;
+
+  // Returns the values with the category re-suggested from the text, unless
+  // the user has chosen a category (or this is a transfer, which has none).
+  function withSuggestedCategory(next: TransactionFormValues, chosenByUser: boolean): TransactionFormValues {
+    if (chosenByUser || next.type === 'transfer') {
+      setSuggestedKeyword('');
+      return next;
+    }
+    const suggestion = categorize(`${next.description} ${next.merchant}`, next.type);
+    setSuggestedKeyword(suggestion === null ? '' : suggestion.keyword);
+    return { ...next, categoryId: suggestion === null ? '' : suggestion.categoryId };
+  }
 
   function setField(field: FormField, value: string): void {
     setValues((current) => ({ ...current, [field]: value }));
   }
 
-  // A category only fits one kind of transaction, so switching type clears
-  // a category that no longer fits.
+  function handleTextChange(field: 'description' | 'merchant', value: string): void {
+    setValues(withSuggestedCategory({ ...values, [field]: value }, categoryChosenByUser));
+  }
+
+  function handleCategoryChange(value: string): void {
+    setCategoryChosenByUser(value !== '');
+    setSuggestedKeyword('');
+    setField('categoryId', value);
+  }
+
+  // A category only fits one kind of transaction, so switching type clears a
+  // category that no longer fits, and suggestions start again for the new type.
   function handleTypeChange(type: TransactionFormValues['type']): void {
-    setValues((current) => {
-      const kind = type === 'income' ? 'income' : 'expense';
-      const chosen = data.categories.find((category) => category.id === current.categoryId);
-      const stillFits = type !== 'transfer' && chosen !== undefined && chosen.kind === kind;
-      return { ...current, type, categoryId: stillFits ? current.categoryId : '' };
-    });
+    const kind = type === 'income' ? 'income' : 'expense';
+    const chosen = data.categories.find((category) => category.id === values.categoryId);
+    const stillFits = type !== 'transfer' && chosen !== undefined && chosen.kind === kind;
+    const chosenByUser = categoryChosenByUser && stillFits;
+
+    setCategoryChosenByUser(chosenByUser);
+    setValues(
+      withSuggestedCategory({ ...values, type, categoryId: stillFits ? values.categoryId : '' }, chosenByUser),
+    );
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
@@ -152,7 +193,7 @@ export default function TransactionForm({ data, transaction, today, onSave, onCa
             type="text"
             autoComplete="off"
             value={values.description}
-            onChange={(event) => setField('description', event.target.value)}
+            onChange={(event) => handleTextChange('description', event.target.value)}
           />
           {renderError('description')}
         </div>
@@ -177,9 +218,9 @@ export default function TransactionForm({ data, transaction, today, onSave, onCa
           <div className="field">
             <label htmlFor={fieldId('categoryId')}>Category</label>
             <select
-              {...fieldProps('categoryId')}
+              {...fieldProps('categoryId', showSuggestionHint ? 'txn-category-hint' : undefined)}
               value={values.categoryId}
-              onChange={(event) => setField('categoryId', event.target.value)}
+              onChange={(event) => handleCategoryChange(event.target.value)}
             >
               <option value="">Choose a category</option>
               {categoryOptions.map((category) => (
@@ -188,6 +229,11 @@ export default function TransactionForm({ data, transaction, today, onSave, onCa
                 </option>
               ))}
             </select>
+            {showSuggestionHint && (
+              <p id="txn-category-hint" className="field-hint">
+                {`Suggested because the text contains "${suggestedKeyword}". You can choose a different category.`}
+              </p>
+            )}
             {renderError('categoryId')}
           </div>
         )}
@@ -254,7 +300,7 @@ export default function TransactionForm({ data, transaction, today, onSave, onCa
             type="text"
             autoComplete="off"
             value={values.merchant}
-            onChange={(event) => setField('merchant', event.target.value)}
+            onChange={(event) => handleTextChange('merchant', event.target.value)}
           />
           {renderError('merchant')}
         </div>

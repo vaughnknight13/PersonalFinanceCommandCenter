@@ -290,3 +290,35 @@
 .actions-cell .button + .button {
   margin-left: var(--space-1);
 }
+
+.page-header h2 {
+  margin: 0;
+}
+
+.form-panel {
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.form-panel h3 {
+  margin: 0;
+}
+
+.data-table th[scope='row'] {
+  font-weight: 600;
+}
+
+.keyword-list div {
+  margin-bottom: var(--space-2);
+}
+
+.keyword-list dt {
+  font-weight: 600;
+}
+
+.keyword-list dd {
+  margin: 0;
+  color: var(--color-text-muted);
+}
