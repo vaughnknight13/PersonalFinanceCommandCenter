@@ -31,3 +31,14 @@ not learn. The same text always gives the same suggestion.
 - Scoring several matches instead of choosing the longest keyword.
 - A learned model, if a deterministic baseline stops being enough. The
   `Categorizer` function type is the seam where it would plug in.
+
+## Your own rules
+- Rules written by the user live in the saved data (`categoryRules`) and are
+  checked **before** the built-in rules, as a separate group. If any of your
+  rules match, the built-in rules are not consulted. This is deliberate: merging
+  the two lists would let a longer built-in keyword beat a shorter rule of yours.
+- Within your rules, the same matching logic applies (whole words, longest
+  keyword wins).
+- Two rules cannot have the same keyword after normalization ("Maple & Main"
+  and "maple main" count as the same), because the result would depend on order.
+- Deleting a category deletes the rules that point at it.

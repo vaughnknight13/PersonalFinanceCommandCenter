@@ -18,9 +18,10 @@ export default function CategorizationInfo({ categories }: CategorizationInfoPro
     <section className="card stack" aria-labelledby="categorization-heading">
       <h2 id="categorization-heading">How automatic categories work</h2>
       <p>
-        While you type a description or merchant, the transaction form looks for built-in keywords and fills in the
-        matching category. Keywords match whole words only, ignoring capital letters and punctuation. When several
-        match, the longest keyword wins. These are fixed rules, not machine learning, so the same text always gives
+        While you type a description or merchant, the transaction form looks for keywords and fills in the matching
+        category. Your own rules are checked first. If none of them match, the built-in keywords below are used.
+        Keywords match whole words only, ignoring capital letters and punctuation. When several keywords of the same
+        group match, the longest one wins. These are fixed rules, not machine learning, so the same text always gives
         the same suggestion. You can always choose a different category yourself.
       </p>
       <details>

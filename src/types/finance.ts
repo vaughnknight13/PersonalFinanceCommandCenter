@@ -168,6 +168,14 @@ export const savingsGoalSchema = z.object({
   notes: z.string().trim().max(1000, 'Keep this to 1,000 characters or fewer.').optional(),
 });
 
+// A rule the user wrote: "when the text contains this keyword, suggest this
+// category". Matching is done by the categorizer (see features/categorization).
+export const categoryRuleSchema = z.object({
+  id: idSchema,
+  keyword: requiredText(60, 'Enter a keyword.'),
+  categoryId: idSchema,
+});
+
 // isDemo is true only while the data came from the built-in demo dataset.
 // It changes only when the user loads demo data, starts fresh, or restores a backup.
 export const appDataSchema = z.object({
@@ -178,6 +186,7 @@ export const appDataSchema = z.object({
   budgets: z.array(budgetSchema),
   recurringItems: z.array(recurringItemSchema),
   savingsGoals: z.array(savingsGoalSchema),
+  categoryRules: z.array(categoryRuleSchema),
 });
 
 export type Account = z.infer<typeof accountSchema>;
@@ -186,4 +195,5 @@ export type Transaction = z.infer<typeof transactionSchema>;
 export type Budget = z.infer<typeof budgetSchema>;
 export type RecurringItem = z.infer<typeof recurringItemSchema>;
 export type SavingsGoal = z.infer<typeof savingsGoalSchema>;
+export type CategoryRule = z.infer<typeof categoryRuleSchema>;
 export type AppData = z.infer<typeof appDataSchema>;

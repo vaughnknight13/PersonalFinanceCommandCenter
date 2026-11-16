@@ -11,5 +11,6 @@ export function createEmptyData(): AppData {
     budgets: [],
     recurringItems: [],
     savingsGoals: [],
+    categoryRules: [],
   };
 }

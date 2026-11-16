@@ -125,11 +125,12 @@ export function replaceCategory(data: AppData, category: Category): AppData {
   };
 }
 
-// Removes the category and its budget (if it has one).
+// Removes the category, its budget (if it has one) and any keyword rules that point at it.
 export function removeCategory(data: AppData, categoryId: string): AppData {
   return {
     ...data,
     categories: data.categories.filter((existing) => existing.id !== categoryId),
     budgets: data.budgets.filter((budget) => budget.categoryId !== categoryId),
+    categoryRules: data.categoryRules.filter((rule) => rule.categoryId !== categoryId),
   };
 }

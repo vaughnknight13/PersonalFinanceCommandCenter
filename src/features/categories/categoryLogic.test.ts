@@ -138,4 +138,17 @@ describe('category changes', () => {
     expect(result.transactions).toBe(data.transactions);
     expect(data.budgets).toHaveLength(1);
   });
+
+  it('also removes the keyword rules that point at the category', () => {
+    const data = {
+      ...makeValidData(),
+      categoryRules: [
+        { id: 'r1', keyword: 'lunch', categoryId: 'cat-food' },
+        { id: 'r2', keyword: 'salary', categoryId: 'cat-pay' },
+      ],
+    };
+    const result = removeCategory(data, 'cat-food');
+    expect(result.categoryRules.map((rule) => rule.id)).toEqual(['r2']);
+    expect(data.categoryRules).toHaveLength(2);
+  });
 });

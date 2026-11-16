@@ -102,4 +102,21 @@ describe('validateAppData', () => {
     expect(errors).toHaveLength(21);
     expect(errors[20]).toBe('...and 30 more problems.');
   });
+
+  it('validates keyword rules', () => {
+    const data = makeValidData();
+    const rule = { id: 'r1', keyword: 'lunch', categoryId: 'cat-food' };
+
+    expect(validateAppData({ ...data, categoryRules: [rule] }).ok).toBe(true);
+    expect(errorsFor({ ...data, categoryRules: [{ ...rule, categoryId: 'nope' }] }).join(' ')).toContain(
+      'Keyword rule "r1" uses a category that does not exist',
+    );
+    expect(errorsFor({ ...data, categoryRules: [rule, rule] })).toContain('Duplicate keyword rule id "r1".');
+    expect(errorsFor({ ...data, categoryRules: [{ id: 'r1', keyword: '  ', categoryId: 'cat-food' }] }).length).toBeGreaterThan(0);
+  });
+
+  it('rejects data that has no keyword rules list at all', () => {
+    const { categoryRules: _removed, ...withoutRules } = makeValidData();
+    expect(errorsFor(withoutRules).some((error) => error.startsWith('categoryRules'))).toBe(true);
+  });
 });

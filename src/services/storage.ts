@@ -1,9 +1,10 @@
 import type { AppData } from '../types/finance';
 import { validateAppData } from './appDataValidation';
+import { migrateV1ToV2 } from './migrations';
 
 export const STORAGE_KEY = 'pfcc:data';
 export const BACKUP_KEY = 'pfcc:corrupt-backup';
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 // The part of the browser's Storage object we use. Tests pass a fake one.
 export interface StorageLike {
@@ -17,7 +18,7 @@ export interface StorageLike {
 // format changes, bump CURRENT_SCHEMA_VERSION and add a step here.
 export type Migration = (data: unknown) => unknown;
 export type MigrationMap = Readonly<Record<number, Migration>>;
-const migrations: MigrationMap = {};
+const migrations: MigrationMap = { 1: migrateV1ToV2 };
 
 interface Envelope {
   schemaVersion: number;

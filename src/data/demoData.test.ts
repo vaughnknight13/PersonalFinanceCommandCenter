@@ -4,6 +4,8 @@ import { addMonthsClamped, startOfMonth } from '../utils/dates';
 import { createDemoData } from './demoData';
 import { DEFAULT_CATEGORIES } from './defaultCategories';
 import { createEmptyData } from './emptyData';
+import { DEFAULT_KEYWORD_RULES } from '../features/categorization/defaultRules';
+import { createCategorizerWithUserRules } from '../features/categorization/categorizer';
 
 describe('createDemoData', () => {
   it.each(['2026-10-20', '2028-02-29', '2026-01-31', '2026-03-01', '2026-12-31', '2026-10-01'])(
@@ -55,6 +57,20 @@ describe('createDemoData', () => {
     expect(goals.map((goal) => goal.targetDate)).toContain(addMonthsClamped('2026-10-20', 10));
     expect(goals.every((goal) => goal.targetDate > startOfMonth('2026-10-20'))).toBe(true);
   });
+
+  it('includes example keyword rules, and with them every demo transaction is categorized as assigned', () => {
+    const data = createDemoData('2026-10-20');
+    expect(data.categoryRules.length).toBeGreaterThan(0);
+
+    const categorize = createCategorizerWithUserRules(data.categories, data.categoryRules, DEFAULT_KEYWORD_RULES);
+    for (const transaction of data.transactions) {
+      if (transaction.type === 'transfer' || transaction.categoryId === null) {
+        continue;
+      }
+      const suggestion = categorize(`${transaction.description} ${transaction.merchant ?? ''}`, transaction.type);
+      expect(suggestion?.categoryId, transaction.description).toBe(transaction.categoryId);
+    }
+  });
 });
 
 describe('createEmptyData', () => {
@@ -65,5 +81,6 @@ describe('createEmptyData', () => {
     expect(data.categories).toHaveLength(DEFAULT_CATEGORIES.length);
     expect(data.accounts).toHaveLength(1);
     expect(data.transactions).toHaveLength(0);
+    expect(data.categoryRules).toEqual([]);
   });
 });

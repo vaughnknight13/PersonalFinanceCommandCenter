@@ -153,12 +153,36 @@ describe('App', () => {
     saveDemoDataBeforeLoad();
     renderApp();
 
-    fireEvent.click(screen.getByRole('link', { name: 'Accounts & categories' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Accounts & Categories' }));
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Accounts and categories' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Accounts and Categories' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Accounts' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Categories' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'How automatic categories work' })).toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'Everyday Checking' })).toBeInTheDocument();
+  });
+
+  it('upgrades data saved by the previous version of the app, and saves in the new format after a change', () => {
+    const { categoryRules: _added, ...versionOneData } = createDemoData(todayIso());
+    const savedByVersionOne = JSON.stringify({ schemaVersion: 1, savedAt: 'x', data: versionOneData });
+    window.localStorage.setItem(STORAGE_KEY, savedByVersionOne);
+
+    renderApp('/manage');
+
+    expect(screen.getByRole('heading', { name: 'Your keyword rules' })).toBeInTheDocument();
+    expect(screen.getByText('You have not added any rules yet.')).toBeInTheDocument();
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(savedByVersionOne); // loading did not rewrite it
+
+    clickButton('Add rule');
+    const form = screen.getByRole('form', { name: 'Add rule' });
+    fireEvent.change(within(form).getByLabelText('Keyword'), { target: { value: 'Corner Store' } });
+    fireEvent.change(within(form).getByLabelText('Category'), { target: { value: 'cat-groceries' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Save rule' }));
+
+    expect(screen.getByText('Rule added.')).toBeInTheDocument();
+    const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(saved.schemaVersion).toBe(2);
+    expect(saved.data.categoryRules).toHaveLength(1);
+    expect(saved.data.transactions.length).toBeGreaterThan(0);
   });
 });

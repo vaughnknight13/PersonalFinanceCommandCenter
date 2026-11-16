@@ -3,7 +3,7 @@ import type { StorageActionResult } from '../../services/storage';
 import type { AppData, Transaction } from '../../types/finance';
 import type { IsoDate } from '../../types/primitives';
 import { createId } from '../../utils/ids';
-import { createCategorizer } from '../categorization/categorizer';
+import { createCategorizerWithUserRules } from '../categorization/categorizer';
 import { DEFAULT_KEYWORD_RULES } from '../categorization/defaultRules';
 import {
   FORM_FIELD_ORDER,
@@ -53,6 +53,7 @@ export default function TransactionEntryForm({
   // existing transaction already has its category, so it starts as "chosen".
   const [categoryChosenByUser, setCategoryChosenByUser] = useState(isEditing);
   const [suggestedKeyword, setSuggestedKeyword] = useState('');
+  const [suggestedSource, setSuggestedSource] = useState<'yours' | 'built-in'>('built-in');
   const descriptionRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,7 +61,10 @@ export default function TransactionEntryForm({
   }, []);
 
   // Rebuilt only when the categories change, not on every keystroke.
-  const categorize = useMemo(() => createCategorizer(data.categories, DEFAULT_KEYWORD_RULES), [data.categories]);
+  const categorize = useMemo(
+    () => createCategorizerWithUserRules(data.categories, data.categoryRules, DEFAULT_KEYWORD_RULES),
+    [data.categories, data.categoryRules],
+  );
 
   const isTransfer = values.type === 'transfer';
   const categoryKind = values.type === 'income' ? 'income' : 'expense';
@@ -76,6 +80,9 @@ export default function TransactionEntryForm({
     }
     const suggestion = categorize(`${next.description} ${next.merchant}`, next.type);
     setSuggestedKeyword(suggestion === null ? '' : suggestion.keyword);
+    if (suggestion !== null) {
+      setSuggestedSource(suggestion.source);
+    }
     return { ...next, categoryId: suggestion === null ? '' : suggestion.categoryId };
   }
 
@@ -231,7 +238,9 @@ export default function TransactionEntryForm({
             </select>
             {showSuggestionHint && (
               <p id="txn-category-hint" className="field-hint">
-                {`Suggested because the text contains "${suggestedKeyword}". You can choose a different category.`}
+                {suggestedSource === 'yours'
+                  ? `Suggested by your rule "${suggestedKeyword}". You can choose a different category.`
+                  : `Suggested because the text contains "${suggestedKeyword}". You can choose a different category.`}
               </p>
             )}
             {renderError('categoryId')}

@@ -102,6 +102,7 @@ function findReferenceProblems(data: AppData): string[] {
   };
   collectIds('category', data.categories, errors);
   collectIds('transaction', data.transactions, errors);
+  collectIds('keyword rule', data.categoryRules, errors);
   const recurringIds = collectIds('recurring item', data.recurringItems, errors);
 
   for (const transaction of data.transactions) {
@@ -115,6 +116,12 @@ function findReferenceProblems(data: AppData): string[] {
 
   for (const item of data.recurringItems) {
     errors.push(...describeMovementProblems('Recurring item', item.id, item, lookups));
+  }
+
+  for (const rule of data.categoryRules) {
+    if (!lookups.categoriesById.has(rule.categoryId)) {
+      errors.push(`Keyword rule "${rule.id}" uses a category that does not exist ("${rule.categoryId}").`);
+    }
   }
 
   const budgetedCategories = new Set<string>();

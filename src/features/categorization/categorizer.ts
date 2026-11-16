@@ -73,3 +73,31 @@ export function createCategorizer(categories: readonly Category[], rules: readon
     return best === null ? null : { categoryId: best.categoryId, keyword: best.keyword };
   };
 }
+
+export interface SourcedSuggestion extends CategorySuggestion {
+  source: 'yours' | 'built-in';
+}
+
+export type SourcedCategorizer = (text: string, type: 'income' | 'expense') => SourcedSuggestion | null;
+
+// The user's rules are checked first, as a separate group. If any of them
+// match, the built-in rules are not consulted at all. Merging the two lists
+// instead would let a longer built-in keyword override a shorter rule of
+// yours, and a rule you wrote should always win.
+export function createCategorizerWithUserRules(
+  categories: readonly Category[],
+  userRules: readonly KeywordRule[],
+  builtInRules: readonly KeywordRule[],
+): SourcedCategorizer {
+  const fromUserRules = createCategorizer(categories, userRules);
+  const fromBuiltInRules = createCategorizer(categories, builtInRules);
+
+  return (text, type) => {
+    const userMatch = fromUserRules(text, type);
+    if (userMatch !== null) {
+      return { ...userMatch, source: 'yours' };
+    }
+    const builtInMatch = fromBuiltInRules(text, type);
+    return builtInMatch === null ? null : { ...builtInMatch, source: 'built-in' };
+  };
+}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { StorageActionResult } from '../../services/storage';
 import type { AppData, Category } from '../../types/finance';
 import { createId } from '../../utils/ids';
+import { pluralize } from '../../utils/plural';
 import {
   addCategory,
   categoryFormFromCategory,
@@ -63,7 +64,9 @@ export default function CategoryManager({ data, onChange }: CategoryManagerProps
     }
 
     const budgetWarning = usage.get(category.id)?.hasBudget === true ? ' Its monthly budget will also be removed.' : '';
-    if (!window.confirm(`Delete the category "${category.name}"?${budgetWarning}`)) {
+    const ruleCount = data.categoryRules.filter((rule) => rule.categoryId === category.id).length;
+    const ruleWarning = ruleCount > 0 ? ` Its ${pluralize(ruleCount, 'keyword rule')} will also be removed.` : '';
+    if (!window.confirm(`Delete the category "${category.name}"?${budgetWarning}${ruleWarning}`)) {
       return;
     }
 

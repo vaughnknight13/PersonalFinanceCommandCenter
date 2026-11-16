@@ -216,6 +216,10 @@ export function createDemoData(today: IsoDate): AppData {
 
   return {
     isDemo: true,
+    categoryRules: [
+      { id: 'rule-demo-maple-main', keyword: 'Maple & Main', categoryId: 'cat-shopping' },
+      { id: 'rule-demo-techfix', keyword: 'TechFix', categoryId: 'cat-other-expense' },
+    ],
     accounts: [
       { id: CHECKING, name: 'Everyday Checking', kind: 'checking', openingBalanceCents: 180_000 },
       { id: SAVINGS, name: 'High-Yield Savings', kind: 'savings', openingBalanceCents: 165_000 },

@@ -18,6 +18,7 @@ export function makeValidData(): AppData {
       { id: 't-3', date: '2026-10-03', description: 'Move to savings', amountCents: 50_000, type: 'transfer', categoryId: null, accountId: 'acct-1', toAccountId: 'acct-2', goalId: 'goal-1' },
     ],
     budgets: [{ categoryId: 'cat-food', monthlyLimitCents: 40_000 }],
+    categoryRules: [],
     recurringItems: [
       { id: 'rec-1', description: 'Paycheck', amountCents: 200_000, type: 'income', categoryId: 'cat-pay', accountId: 'acct-1', frequency: 'biweekly', startDate: '2026-10-01', active: true },
     ],

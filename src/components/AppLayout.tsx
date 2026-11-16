@@ -45,7 +45,7 @@ export default function AppLayout() {
               </li>
               <li>
                 <NavLink to="/manage" className={navClassName}>
-                  Accounts &amp; categories
+                  Accounts &amp; Categories
                 </NavLink>
               </li>
               <li>

@@ -145,4 +145,17 @@ describe('CategoryManager', () => {
 
     expect(within(form).getByRole('alert')).toHaveTextContent('Could not save: storage is full.');
   });
+
+  it('warns that keyword rules are removed too', () => {
+    const data = withSpareCategory();
+    const initial: AppData = {
+      ...data,
+      categoryRules: [{ id: 'r1', keyword: 'Pottery', categoryId: 'cat-hobby' }],
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<Harness initial={initial} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Hobbies' }));
+    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining('1 keyword rule will also be removed'));
+  });
 });
